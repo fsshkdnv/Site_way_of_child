@@ -1,0 +1,19 @@
+{
+  "name": "time-tracking-mvp",
+  "version": "1.0.0",
+  "description": "Simple employee time tracking web service",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "init-db": "node db/init.js"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "body-parser": "^2.2.0",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "express-session": "^1.18.2",
+    "sqlite3": "^5.1.7",
+    "xlsx": "^0.18.5"
+  }
+}

@@ -1,0 +1,280 @@
+<!doctype html>
+<!-- Главная страница SPA: форма входа и дашборд учёта времени; стили Bootstrap + локальный style.css, логика в app.js. -->
+<html lang="ru">
+  <head>
+    <!-- Мета-теги, заголовок вкладки, Bootstrap 5, библиотека SheetJS (экспорт XLSX из app.js). -->
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Учет времени</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <div class="container py-4">
+      <!-- Контейнер для кратких сообщений об успехе/ошибке (заполняется функцией showAlert в app.js). -->
+      <div id="alertBox"></div>
+
+      <!-- Экран входа: до авторизации виден только этот блок; после входа скрывается через initDashboard. -->
+      <section id="loginView" class="mx-auto" style="max-width: 420px">
+        <h1 class="h3 mb-3 text-center">Вход</h1>
+        <form id="loginForm" class="card card-body shadow-sm">
+          <div class="mb-3">
+            <label class="form-label">Логин</label>
+            <input id="loginUsername" class="form-control" required />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Пароль</label>
+            <input id="loginPassword" type="password" class="form-control" required />
+          </div>
+          <button class="btn btn-primary w-100" type="submit">Войти</button>
+        </form>
+      </section>
+
+      <!-- Основной интерфейс после входа: фильтры, форма записей, таблицы; для admin — доп. блоки. -->
+      <section id="dashboardView" class="d-none">
+        <!-- Шапка дашборда: ФИО и роль (userInfo), кнопки профиля и выхода (обработчики в app.js). -->
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+          <div>
+            <h2 class="h4 mb-0">Дашборд</h2>
+            <small id="userInfo" class="text-muted"></small>
+          </div>
+          <div class="d-flex gap-2">
+            <button id="profileBtn" class="btn btn-outline-secondary btn-sm">Профиль</button>
+            <button id="logoutBtn" class="btn btn-outline-danger btn-sm">Выйти</button>
+          </div>
+        </div>
+
+        <!-- Выбор периода (год/месяц) и для администратора — сотрудник в фильтре; кнопки «Применить» и экспорт текущей таблицы. -->
+        <div class="card card-body mb-3">
+          <div class="row g-2 align-items-end">
+            <div class="col-6 col-md-2">
+              <label class="form-label">Год</label>
+              <input id="yearInput" type="number" class="form-control" />
+            </div>
+            <div class="col-6 col-md-2">
+              <label class="form-label">Месяц</label>
+              <select id="monthInput" class="form-select"></select>
+            </div>
+            <div id="employeeFilterWrap" class="col-12 col-md-4 d-none">
+              <label class="form-label">Сотрудник</label>
+              <select id="employeeFilter" class="form-select"></select>
+            </div>
+            <div class="col-12 col-md-4 d-flex gap-2">
+              <button id="applyFilterBtn" class="btn btn-primary">Применить фильтр</button>
+              <button id="exportCurrentBtn" class="btn btn-success">Экспорт таблицы</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Карточки итогов за выбранный месяц: значения обновляет renderSummary() в app.js. -->
+        <div class="row g-3 mb-3" id="summaryCards">
+          <div class="col-6 col-md-3">
+            <div class="card card-body">
+              <small class="text-muted">Рабочие часы</small>
+              <strong id="sumWork">0</strong>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="card card-body">
+              <small class="text-muted">Методические часы</small>
+              <strong id="sumMethod">0</strong>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="card card-body">
+              <small class="text-muted">Больничные дни</small>
+              <strong id="sumSick">0</strong>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="card card-body">
+              <small class="text-muted">Отпускные дни</small>
+              <strong id="sumVacation">0</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Форма создания/редактирования записи учёта: тип, часы или диапазон времени (тариф), комментарий. -->
+        <div class="card card-body mb-3">
+          <h3 class="h5">Добавить запись</h3>
+          <form id="recordForm" class="row g-2">
+            <input type="hidden" id="recordId" />
+            <div id="recordEmployeeWrap" class="col-12 col-md-3 d-none">
+              <label class="form-label">Сотрудник</label>
+              <select id="recordEmployeeSelect" class="form-select"></select>
+            </div>
+            <div class="col-12 col-md-3">
+              <label class="form-label">Дата</label>
+              <input id="recordDate" type="date" class="form-control" required />
+            </div>
+            <div class="col-12 col-md-3">
+              <label class="form-label">Тип</label>
+              <select id="recordType" class="form-select" required>
+                <option value="work">Рабочие часы</option>
+                <option value="method">Методические часы</option>
+                <option value="sick">Больничный</option>
+                <option value="vacation">Отпуск</option>
+              </select>
+            </div>
+            <div class="col-12 col-md-3">
+              <div id="hoursInputModeWrap">
+                <label class="form-label">Тип ввода часов</label>
+                <select id="hoursInputMode" class="form-select mb-2">
+                  <option value="hours">Часы</option>
+                  <option value="range">Диапазон времени</option>
+                </select>
+              </div>
+              <label id="valueLabel" class="form-label">Часы</label>
+              <input id="recordValue" type="number" step="0.5" min="0" class="form-control" required />
+              <div id="timeRangeWrap" class="row g-2 d-none">
+                <div class="col-6">
+                  <label class="form-label mt-2">С</label>
+                  <input id="rangeStart" type="time" class="form-control" />
+                </div>
+                <div class="col-6">
+                  <label class="form-label mt-2">До</label>
+                  <input id="rangeEnd" type="time" class="form-control" />
+                </div>
+                <div class="col-12">
+                  <small id="rangePreview" class="text-muted"></small>
+                </div>
+                <div
+                  id="tariffX2Hint"
+                  class="alert alert-info py-2 px-2 small mt-1 mb-0 d-none"
+                  role="status"
+                ></div>
+              </div>
+            </div>
+            <div class="col-12 col-md-4">
+              <label class="form-label" for="recordComment"
+                >Комментарий
+                <small id="commentRequiredMethod" class="text-danger d-none"
+                  >(обязателен при заполнении методических часов)</small
+                >
+                <small id="commentRequiredTariff" class="text-danger d-none"
+                  >(обязателен при тарифе ×2 — укажите причину)</small
+                ></label
+              >
+              <textarea id="recordComment" class="form-control" rows="1"></textarea>
+            </div>
+            <div class="col-12 d-flex gap-2">
+              <button class="btn btn-primary" type="submit" id="recordSubmitBtn">Добавить</button>
+              <button class="btn btn-secondary d-none" type="button" id="cancelEditBtn">Отмена</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Только для роли admin: список пользователей, создание сотрудника, выгрузка месячного отчёта (loadUsers). -->
+        <div id="adminUsersSection" class="card card-body mb-3 d-none">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h3 class="h5 mb-0">Сотрудники</h3>
+            <div class="d-flex gap-2">
+              <button id="exportMonthlyBtn" class="btn btn-outline-success btn-sm">Выгрузить отчет за месяц</button>
+              <button id="createUserBtn" class="btn btn-outline-primary btn-sm">Создать сотрудника</button>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-sm align-middle">
+              <thead>
+                <tr>
+                  <th>ФИО</th>
+                  <th>Логин</th>
+                  <th>Роль</th>
+                  <th>Действия</th>
+                </tr>
+              </thead>
+              <tbody id="usersTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Таблица записей выбранного периода; строки строит renderRecords(), действия — делегирование кликов в app.js. -->
+        <div class="card card-body">
+          <h3 class="h5">Записи</h3>
+          <div class="table-responsive">
+            <table class="table table-striped align-middle">
+              <thead>
+                <tr>
+                  <th>Дата</th>
+                  <th>Тип</th>
+                  <th>Часы/Дни</th>
+                  <th>Комментарий</th>
+                  <th>Обновлено</th>
+                  <th>Действия</th>
+                </tr>
+              </thead>
+              <tbody id="recordsTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Модальное окно смены пароля текущего пользователя (submit → PUT /api/profile). -->
+    <div class="modal fade" id="profileModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog">
+        <form id="profileForm" class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Смена пароля</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-2">
+              <label class="form-label">Старый пароль</label>
+              <input id="oldPassword" type="password" class="form-control" required />
+            </div>
+            <div class="mb-2">
+              <label class="form-label">Новый пароль</label>
+              <input id="newPassword" type="password" class="form-control" required />
+            </div>
+            <div>
+              <label class="form-label">Подтверждение нового пароля</label>
+              <input id="newPassword2" type="password" class="form-control" required />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-primary" type="submit">Сохранить</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Модальное окно создания/редактирования сотрудника (только admin; POST/PUT /api/users). -->
+    <div class="modal fade" id="userModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog">
+        <form id="userForm" class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="userModalTitle">Создать сотрудника</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="userEditId" />
+            <div class="mb-2">
+              <label class="form-label">Логин</label>
+              <input id="userUsername" class="form-control" required />
+            </div>
+            <div class="mb-2">
+              <label class="form-label">ФИО</label>
+              <input id="userFullName" class="form-control" required />
+            </div>
+            <div>
+              <label class="form-label">Пароль (опц. при редактировании)</label>
+              <input id="userPassword" type="password" class="form-control" />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-primary" type="submit">Сохранить</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Bootstrap (модальные окна), затем клиентская логика приложения. -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
