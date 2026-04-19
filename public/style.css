@@ -1,19 +1,153 @@
 /**
- * Дополнительные стили к Bootstrap для страницы учёта времени (index.html).
- * Подключается после bootstrap.min.css; влияет на фон страницы, прокрутку таблиц и отступы у алертов.
+ * Стили с фирменными цветами: фиолетовый #5149F5 и розовый #FD79AB
+ * поверх Bootstrap 5 (подключается после bootstrap.min.css).
  */
 
-/* Общий фон приложения (область под шапкой и карточками дашборда). */
-body {
-  background: #f8f9fa;
+:root {
+  --brand-purple: #5149f5;
+  --brand-pink: #fd79ab;
+  --brand-purple-rgb: 81, 73, 245;
+  --brand-pink-rgb: 253, 121, 171;
+  --bs-primary: var(--brand-purple);
+  --bs-primary-rgb: var(--brand-purple-rgb);
+  --bs-link-color: var(--brand-purple);
+  --bs-link-hover-color: #5149F5;
+  --bs-focus-ring-color: rgba(var(--brand-purple-rgb), 0.35);
 }
 
-/* Горизонтальная прокрутка широких таблиц «Сотрудники» и «Записи» на узких экранах. */
+body {
+  min-height: 100vh;
+  background: linear-gradient(
+    165deg,
+    #f3f2ff 0%,
+    #fff5fa 42%,
+    #f8f7fc 100%
+  );
+}
+
+.card {
+  border: 1px solid rgba(var(--brand-purple-rgb), 0.1);
+  box-shadow: 0 6px 28px rgba(var(--brand-purple-rgb), 0.07);
+}
+
+#loginView .card {
+  border-top: 4px solid transparent;
+  border-image: linear-gradient(90deg, var(--brand-purple), var(--brand-pink)) 1;
+  border-image-slice: 1 0 0 0;
+}
+
+#summaryCards .col:nth-child(odd) .card {
+  border-left: 4px solid var(--brand-purple);
+}
+
+#summaryCards .col:nth-child(even) .card {
+  border-left: 4px solid var(--brand-pink);
+}
+
+.table thead th {
+  background: linear-gradient(
+    180deg,
+    rgba(var(--brand-purple-rgb), 0.12) 0%,
+    rgba(var(--brand-pink-rgb), 0.08) 100%
+  );
+  color: #5149F5;
+  font-weight: 600;
+  border-bottom-color: rgba(var(--brand-purple-rgb), 0.2) !important;
+}
+
+.table-striped > tbody > tr:nth-of-type(odd) > * {
+  --bs-table-bg-type: rgba(var(--brand-purple-rgb), 0.03);
+}
+
+.btn-success {
+  --bs-btn-color: #fff;
+  --bs-btn-bg: var(--brand-pink);
+  --bs-btn-border-color: var(--brand-pink);
+  --bs-btn-hover-color: #fff;
+  --bs-btn-hover-bg: #f06a9a;
+  --bs-btn-hover-border-color: #f06a9a;
+  --bs-btn-active-color: #fff;
+  --bs-btn-active-bg: #e55f90;
+  --bs-btn-active-border-color: #e55f90;
+  --bs-btn-disabled-color: #fff;
+  --bs-btn-disabled-bg: rgba(var(--brand-pink-rgb), 0.55);
+  --bs-btn-disabled-border-color: rgba(var(--brand-pink-rgb), 0.4);
+}
+
+.btn-outline-success {
+  --bs-btn-color: #e8488f;
+  --bs-btn-border-color: var(--brand-pink);
+  --bs-btn-hover-color: #fff;
+  --bs-btn-hover-bg: var(--brand-pink);
+  --bs-btn-hover-border-color: var(--brand-pink);
+  --bs-btn-active-color: #fff;
+  --bs-btn-active-bg: #f06a9a;
+  --bs-btn-active-border-color: #f06a9a;
+}
+
+#profileBtn.btn-outline-secondary {
+  --bs-btn-color: var(--brand-purple);
+  --bs-btn-border-color: rgba(var(--brand-purple-rgb), 0.45);
+  --bs-btn-hover-bg: rgba(var(--brand-purple-rgb), 0.1);
+  --bs-btn-hover-border-color: var(--brand-purple);
+  --bs-btn-hover-color: var(--brand-purple);
+  --bs-btn-active-bg: rgba(var(--brand-purple-rgb), 0.18);
+  --bs-btn-active-border-color: var(--brand-purple);
+  --bs-btn-active-color: #2f2a8a;
+}
+
+#tariffX2Hint.alert-info {
+  --bs-alert-bg: rgba(var(--brand-pink-rgb), 0.12);
+  --bs-alert-border-color: rgba(var(--brand-purple-rgb), 0.25);
+  --bs-alert-color: #4a3d6e;
+}
+
+.modal-header {
+  background: linear-gradient(
+    120deg,
+    var(--brand-purple) 0%,
+    #5149F5 45%,
+    var(--brand-pink) 100%
+  );
+  color: #fff;
+  border-bottom: none;
+}
+
+.modal-header .modal-title {
+  color: #fff;
+}
+
+.modal-header .btn-close {
+  filter: brightness(0) invert(1);
+  opacity: 0.9;
+}
+
+.modal-header .btn-close:hover {
+  opacity: 1;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: rgba(var(--brand-purple-rgb), 0.55);
+  box-shadow: 0 0 0 0.25rem rgba(var(--brand-purple-rgb), 0.22);
+}
+
+#loginView h1,
+#dashboardView h2.h4 {
+  background: linear-gradient(90deg, var(--brand-purple), var(--brand-pink));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+#dashboardView .h5 {
+  color: #5149F5;
+}
+
 .table-responsive {
   overflow-x: auto;
 }
 
-/* Отступ снизу у всплывающих сообщений showAlert в #alertBox (верх контейнера). */
 #alertBox .alert {
   margin-bottom: 1rem;
 }
