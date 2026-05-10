@@ -284,10 +284,17 @@ async function loadUsers() {
   const filter = document.getElementById("employeeFilter");
   const recordSelect = document.getElementById("recordEmployeeSelect");
   const usersBody = document.getElementById("usersTableBody");
+  const prevFilterValue = filter.value;
+  const prevRecordValue = recordSelect.value;
 
   filter.innerHTML = "";
   recordSelect.innerHTML = "";
   usersBody.innerHTML = "";
+
+  const allEmployeesOption = document.createElement("option");
+  allEmployeesOption.value = "";
+  allEmployeesOption.textContent = "Все сотрудники";
+  filter.appendChild(allEmployeesOption);
 
   allUsers
     .filter((u) => u.role === "employee")
@@ -316,6 +323,16 @@ async function loadUsers() {
     `;
     usersBody.appendChild(tr);
   });
+
+  if (prevFilterValue && Array.from(filter.options).some((o) => o.value === prevFilterValue)) {
+    filter.value = prevFilterValue;
+  } else {
+    filter.value = "";
+  }
+
+  if (prevRecordValue && Array.from(recordSelect.options).some((o) => o.value === prevRecordValue)) {
+    recordSelect.value = prevRecordValue;
+  }
 }
 
 // Загрузка записей за выбранный год и месяц GET /api/records с опциональным user_id для администратора.
