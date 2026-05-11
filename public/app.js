@@ -428,8 +428,8 @@ async function exportMonthlyAdminReport() {
     year: yearInput.value,
     month: monthInput.value,
   });
-  const selectedUser = getSelectedUserForRecords();
-  if (selectedUser) params.set("user_id", String(selectedUser));
+  // Месячный админ-отчёт всегда формируется по всем сотрудникам,
+  // независимо от выбранного фильтра в таблице.
 
   const blob = await api(`/api/export/month?${params.toString()}`);
   const url = URL.createObjectURL(blob);
